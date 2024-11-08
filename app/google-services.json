@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "807867382631",
+    "project_id": "proyectocrm-257ed",
+    "storage_bucket": "proyectocrm-257ed.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:807867382631:android:c1aca5c6b7219096a90dc2",
+        "android_client_info": {
+          "package_name": "com.example.proyectocrm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAnwRvGOdEsYcbQudXMGkJ2WXw2JvNMZjY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
