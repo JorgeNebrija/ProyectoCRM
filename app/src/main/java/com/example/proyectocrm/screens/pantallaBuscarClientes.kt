@@ -75,7 +75,9 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
                 Icon(
                     painter = painterResource(id = R.drawable.iconobuscar),
                     contentDescription = "Buscar",
-                    tint = Color.Black
+                    tint = Color.Black,
+                    modifier = Modifier.size(35.dp)
+
                 )
                 BasicTextField(
                     value = searchText,
@@ -87,7 +89,7 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
                     decorationBox = { innerTextField ->
                         if (searchText.isEmpty()) {
                             Text(
-                                text = "Buscar cliente por nombre",
+                                text = "Buscar cliente ",
                                 color = Color.Black,
                                 fontSize = 16.sp
                             )
@@ -107,7 +109,10 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
                             }
                         }
                     },
-                    modifier = Modifier.padding(start = 8.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0756FF)),
+
+                    modifier = Modifier.padding(start = 8.dp),
+
                 ) {
                     Text("Buscar")
                 }

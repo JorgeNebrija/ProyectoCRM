@@ -12,7 +12,7 @@ import com.example.proyectocrm.screens.PantallaLogin
 @Composable
 fun NavigationWrapper (navHostController: NavHostController) {
 
-    NavHost(navController = navHostController, startDestination = "pantallaBuscarClientes") {
+    NavHost(navController = navHostController, startDestination = "pantallaLogin") {
         composable ("pantallaLogin") {PantallaLogin(navHostController)}
         //composable("PantallaCalendario") { PantallaCalendario(navHostController) }
        // composable("PantallaMiPerfil") { PantallaMiPerfil(navHostController) }
