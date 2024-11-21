@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.proyectocrm.screens.PantallaBuscarClientes
 import com.example.proyectocrm.screens.PantallaCalendario
+import com.example.proyectocrm.screens.PantallaConfClientes
 
 import com.example.proyectocrm.screens.PantallaLogin
 
@@ -14,9 +15,10 @@ fun NavigationWrapper (navHostController: NavHostController) {
 
     NavHost(navController = navHostController, startDestination = "pantallaLogin") {
         composable ("pantallaLogin") {PantallaLogin(navHostController)}
-        //composable("PantallaCalendario") { PantallaCalendario(navHostController) }
+        composable("PantallaCalendario") { PantallaCalendario(navHostController) }
        // composable("PantallaMiPerfil") { PantallaMiPerfil(navHostController) }
 composable("pantallaBuscarClientes") { PantallaBuscarClientes(navHostController)  }
+        composable("pantallaConfClientes"){ PantallaConfClientes(navHostController)}
         }
 
     }

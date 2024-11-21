@@ -16,8 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.proyectocrm.R
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun PantallaBuscarClientes(navController: NavHostController) {
@@ -25,12 +24,12 @@ fun PantallaBuscarClientes(navController: NavHostController) {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-
 @Composable
 fun ScaffoldBuscarClientes(navController: NavHostController) {
     // Estados para la búsqueda y los datos del cliente
     var searchText by remember { mutableStateOf("") }
     var cliente by remember { mutableStateOf<Map<String, String>?>(null) } // Cliente inicial nulo
+    var clienteId by remember { mutableStateOf<String?>(null) } // ID del cliente
     var buscando by remember { mutableStateOf(false) } // Para mostrar estado de búsqueda
     var mostrandoMensajeNoEncontrado by remember { mutableStateOf(false) } // Controla el mensaje "Cliente no encontrado"
 
@@ -77,7 +76,6 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
                     contentDescription = "Buscar",
                     tint = Color.Black,
                     modifier = Modifier.size(35.dp)
-
                 )
                 BasicTextField(
                     value = searchText,
@@ -97,12 +95,14 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
                         innerTextField()
                     }
                 )
+
                 Button(
                     onClick = {
                         buscando = true
                         mostrandoMensajeNoEncontrado = false // Reinicia el mensaje al iniciar una nueva búsqueda
-                        buscarClienteEnFirebase(searchText) { resultado ->
+                        buscarClienteEnFirebase(searchText) { resultado, id ->
                             cliente = resultado
+                            clienteId = id
                             buscando = false
                             if (resultado == null) {
                                 mostrandoMensajeNoEncontrado = true // Muestra el mensaje solo si no hay resultado
@@ -110,9 +110,7 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0756FF)),
-
-                    modifier = Modifier.padding(start = 8.dp),
-
+                    modifier = Modifier.padding(start = 8.dp)
                 ) {
                     Text("Buscar")
                 }
@@ -153,9 +151,9 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
                             color = Color.Gray,
                             fontSize = 14.sp
                         )
-                        // Mostrar ciudad del cliente
+                        // Mostrar DNI del cliente
                         Text(
-                            text = "DNI: ${cliente?.get("DNI") ?: "No especificada"}", // Usar .get() para acceder al valor
+                            text = "DNI: ${cliente?.get("DNI") ?: "No especificado"}", // Usar .get() para acceder al valor
                             color = Color.Gray,
                             fontSize = 14.sp
                         )
@@ -167,7 +165,16 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
                             tint = Color.Black
                         )
                     }
-                    IconButton(onClick = { /* Acción de borrar */ }) {
+                    IconButton(onClick = {
+                        clienteId?.let {
+                            eliminarCliente(it) {
+                                // Actualizar el estado después de eliminar el cliente
+                                cliente = null
+                                clienteId = null
+                                mostrandoMensajeNoEncontrado = false
+                            }
+                        }
+                    }) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_delete),
                             contentDescription = "Borrar",
@@ -183,62 +190,75 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
     }
 }
 
-
-// Función para buscar en Firebase
-fun buscarClienteEnFirebase(nombre: String, onResult: (Map<String, String>?) -> Unit) {
-    val db = Firebase.firestore
+fun buscarClienteEnFirebase(nombre: String, onResult: (cliente: Map<String, String>?, id: String?) -> Unit) {
+    val db = FirebaseFirestore.getInstance()
     db.collection("clientes")
         .whereEqualTo("nombre", nombre)
         .get()
         .addOnSuccessListener { result ->
             if (result.documents.isNotEmpty()) {
                 val clienteData = result.documents[0].data as Map<String, String>
-                onResult(clienteData)
+                val clienteId = result.documents[0].id // Obtiene el ID del cliente
+                onResult(clienteData, clienteId)
             } else {
-                onResult(null)
+                onResult(null, null)
             }
         }
         .addOnFailureListener {
-            onResult(null)
+            onResult(null, null)
+        }
+}
+
+fun eliminarCliente(clienteId: String, onDeleteSuccess: () -> Unit) {
+    val db = FirebaseFirestore.getInstance()
+    db.collection("clientes").document(clienteId)
+        .delete()
+        .addOnSuccessListener {
+            // Cliente eliminado correctamente
+            println("Cliente eliminado")
+            onDeleteSuccess() // Llamar a la función para actualizar la UI después de la eliminación
+        }
+        .addOnFailureListener { e ->
+            // Error al eliminar
+            println("Error al eliminar cliente: $e")
         }
 }
 
 @Composable
 fun BottomBuscarClientes(navController: NavHostController) {
-        NavigationBar(
-            containerColor = Color.White
-        ) {
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.buscarazul),
-                        contentDescription = "Inicio",
-                        tint = Color.Unspecified
-                    )
-                },
-                selected = false, // Marca "Inicio" como seleccionado
-                onClick = { navController.navigate("pantallaBuscarClientes") }
-            )
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.calendarioicono),
-                        contentDescription = "Buscar"
-                    )
-                },
-                selected = false,
-                onClick = { navController.navigate("pantallaCalendario") }
-            )
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.iconobuscar),
-                        contentDescription = "Perfil"
-                    )
-                },
-                selected = false,
-                onClick = { navController.navigate("pantallaMiPerfil") }
-            )
-        }
+    NavigationBar(
+        containerColor = Color.White
+    ) {
+        NavigationBarItem(
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.buscarazul),
+                    contentDescription = "Inicio",
+                    tint = Color.Unspecified
+                )
+            },
+            selected = false, // Marca "Inicio" como seleccionado
+            onClick = { navController.navigate("pantallaBuscarClientes") }
+        )
+        NavigationBarItem(
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.calendarioicono),
+                    contentDescription = "Buscar"
+                )
+            },
+            selected = false,
+            onClick = { navController.navigate("pantallaCalendario") }
+        )
+        NavigationBarItem(
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.iconobuscar),
+                    contentDescription = "Perfil"
+                )
+            },
+            selected = false,
+            onClick = { navController.navigate("pantallaMiPerfil") }
+        )
+    }
 }
-

@@ -115,7 +115,7 @@ fun PantallaLogin(navController: NavHostController) {
             ),
             keyboardActions = KeyboardActions(
                 onDone = { /* Acción al completar */ }
-            )
+    )
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -177,7 +177,7 @@ fun loginUser(auth: FirebaseAuth, email: String, password: String, navController
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     message.value = "Inicio de sesión exitoso"
-                    navController.navigate("pantallaBuscarClientes")
+                    navController.navigate("pantallaConfClientes")
                 } else {
                     message.value = "Error: ${task.exception?.message}"
                 }
