@@ -32,6 +32,12 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
     var clienteId by remember { mutableStateOf<String?>(null) } // ID del cliente
     var buscando by remember { mutableStateOf(false) } // Para mostrar estado de búsqueda
     var mostrandoMensajeNoEncontrado by remember { mutableStateOf(false) } // Controla el mensaje "Cliente no encontrado"
+    var mostrarFormulario by remember { mutableStateOf(false) }
+    var mostrarFormularioEditar by remember { mutableStateOf(false) } // Estado para mostrar el formulario de edición
+    var nombre by remember { mutableStateOf("") }
+    var gmail by remember { mutableStateOf("") }
+    var DNI by remember { mutableStateOf("") }
+    var Ciudad by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -52,7 +58,23 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
         },
         bottomBar = {
             BottomBuscarClientes(navController)
-        }
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    mostrarFormulario = true // Mostrar el formulario
+                },
+                containerColor = Color(0xFF0756FF), // Color de fondo
+                contentColor = Color.White // Color del contenido
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.iconosumar), // Icono "+"
+                    contentDescription = "Agregar nuevo cliente",
+                    modifier = Modifier.size(24.dp) // Tamaño del icono
+                )
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End // Posiciona el FAB en la parte inferior derecha
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -99,13 +121,15 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
                 Button(
                     onClick = {
                         buscando = true
-                        mostrandoMensajeNoEncontrado = false // Reinicia el mensaje al iniciar una nueva búsqueda
+                        mostrandoMensajeNoEncontrado =
+                            false // Reinicia el mensaje al iniciar una nueva búsqueda
                         buscarClienteEnFirebase(searchText) { resultado, id ->
                             cliente = resultado
                             clienteId = id
                             buscando = false
                             if (resultado == null) {
-                                mostrandoMensajeNoEncontrado = true // Muestra el mensaje solo si no hay resultado
+                                mostrandoMensajeNoEncontrado =
+                                    true // Muestra el mensaje solo si no hay resultado
                             }
                         }
                     },
@@ -115,7 +139,6 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
                     Text("Buscar")
                 }
             }
-
             // Estado de búsqueda o resultado
             if (buscando) {
                 Text("Buscando...", color = Color.Gray)
@@ -140,7 +163,8 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
                     ) {
                         // Mostrar nombre del cliente
                         Text(
-                            text = cliente?.get("nombre") ?: "Nombre no disponible", // Usar .get() para acceder al valor
+                            text = cliente?.get("nombre")
+                                ?: "Nombre no disponible", // Usar .get() para acceder al valor
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                             color = Color.Black
@@ -158,7 +182,14 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
                             fontSize = 14.sp
                         )
                     }
-                    IconButton(onClick = { /* Acción de editar */ }) {
+                    IconButton(onClick = {
+                        mostrarFormularioEditar = true // Activar el formulario de edición
+                        // Rellenar el formulario con los datos actuales
+                        nombre = cliente?.get("nombre") ?: ""
+                        gmail = cliente?.get("Gmail") ?: ""
+                        DNI = cliente?.get("DNI") ?: ""
+                        Ciudad = cliente?.get("Ciudad") ?: ""
+                    }) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_edit),
                             contentDescription = "Editar",
@@ -188,7 +219,124 @@ fun ScaffoldBuscarClientes(navController: NavHostController) {
             }
         }
     }
+
+    // Formulario para editar el cliente
+    if (mostrarFormularioEditar) {
+        AlertDialog(
+            onDismissRequest = {
+                mostrarFormularioEditar = false
+            }, // Cierra el formulario al hacer clic fuera
+            title = {
+                Text(
+                    text = "Editar Cliente",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    campoTexto("Gmail", gmail, { gmail = it })
+                    campoTexto("Ciudad", Ciudad, { Ciudad = it })
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        clienteId?.let {
+                            actualizarCliente(it, nombre, gmail, DNI, Ciudad) {
+                                mostrarFormularioEditar = false // Cierra el formulario tras actualizar
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0756FF))
+                ) {
+                    Text("Guardar Cambios")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { mostrarFormularioEditar = false } // Cierra el formulario
+                ) {
+                    Text("Cancelar")
+                }
+            },
+            modifier = Modifier.fillMaxWidth(0.9f) // Controla el tamaño del diálogo
+        )
+    }
+    if (mostrarFormulario) {
+        AlertDialog(
+            onDismissRequest = {
+                mostrarFormulario = false
+            }, // Cierra el formulario al hacer clic fuera
+            title = {
+                Text(
+                    text = "Formulario de Clientes",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Campos del formulario
+                    campoTexto("Nombre", nombre, { nombre = it })
+                    campoTexto("Gmail", gmail, { gmail = it })
+                    campoTexto("DNI", DNI, { DNI = it })
+                    campoTexto("Ciudad", Ciudad, { Ciudad = it })
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        guardarClientes(nombre, gmail, DNI, Ciudad) {
+                            mostrarFormulario = false // Cierra el formulario tras guardar
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0756FF))
+                ) {
+                    Text("Guardar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { mostrarFormulario = false } // Cierra el formulario
+                ) {
+                    Text("Cancelar")
+                }
+            },
+            modifier = Modifier.fillMaxWidth(0.9f) // Controla el tamaño del diálogo
+        )
+    }
 }
+
+fun actualizarCliente(clienteId: String, nombre: String, gmail: String, DNI: String, Ciudad: String, function: () -> Unit) {
+    val db = FirebaseFirestore.getInstance()
+    val clienteActualizado = mapOf(
+        "nombre" to nombre,
+        "Gmail" to gmail,
+        "DNI" to DNI,
+        "Ciudad" to Ciudad
+    )
+
+    db.collection("clientes").document(clienteId).update(clienteActualizado)
+        .addOnSuccessListener {
+            println("Cliente actualizado correctamente")
+            function() // Llamar a la función para cerrar el formulario
+        }
+        .addOnFailureListener { e ->
+            println("Error al actualizar cliente: ${e.localizedMessage}")
+            }
+
+        }
 
 fun buscarClienteEnFirebase(nombre: String, onResult: (cliente: Map<String, String>?, id: String?) -> Unit) {
     val db = FirebaseFirestore.getInstance()
@@ -222,6 +370,81 @@ fun eliminarCliente(clienteId: String, onDeleteSuccess: () -> Unit) {
             // Error al eliminar
             println("Error al eliminar cliente: $e")
         }
+
+}
+    fun guardarClientes(
+        nombre: String,
+        gmail: String,
+        DNI: String,
+        Ciudad: String,
+        function: () -> Unit
+    ) {
+        // Validar que los campos obligatorios estén completos
+        if (nombre.isNotEmpty() && gmail.isNotEmpty() && DNI.isNotEmpty() && Ciudad.isNotEmpty()) {
+            // Estructura del cliente que se guardará en Firestore
+            val cliente = mapOf(
+                "nombre" to nombre,
+                "Gmail" to gmail,
+                "DNI" to DNI,
+                "Ciudad" to Ciudad
+            )
+
+            // Referencia a la base de datos
+            val db = FirebaseFirestore.getInstance()
+            val coleccion = "clientes"
+
+            // Guardar cliente en la colección usando el DNI como documento
+            db.collection(coleccion).document(DNI).set(cliente)
+                .addOnSuccessListener {
+                    println("Cliente guardado correctamente")
+
+                }
+                .addOnFailureListener { e ->
+                    println("Error al guardar cliente: ${e.localizedMessage}")
+                }
+        } else {
+            // Mostrar mensaje en consola si faltan campos
+            println("Por favor, complete todos los campos obligatorios")
+        }
+    }
+@Composable
+fun campoTexto(
+    etiqueta: String,
+    valor: String,
+    onValorChange: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+
+    ) {
+        Text(
+            text = etiqueta,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            modifier = Modifier.align(Alignment.Start)
+        )
+        BasicTextField(
+            value = valor,
+            onValueChange = onValorChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White, shape = MaterialTheme.shapes.small)
+                .padding(8.dp),
+            singleLine = true,
+            decorationBox = { innerTextField ->
+                if (valor.isEmpty()) {
+                    Text(
+                        text = "Escribe $etiqueta",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
+                innerTextField()
+            }
+        )
+    }
 }
 
 @Composable

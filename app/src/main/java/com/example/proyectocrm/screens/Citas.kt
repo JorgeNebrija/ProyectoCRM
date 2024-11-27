@@ -1,9 +1,10 @@
 package com.example.proyectocrm.screens
 
-// Clase de datos que representa una cita
 data class Cita(
-    val nombre: String = "",     // Nombre del cliente
-    val dni: String = "",        // DNI del cliente
-    val direccion: String = "",  // Dirección de la cita
-    val hora: String = ""        // Hora de la cita
+    val id: String = "",  // Asegúrate de que el ID sea un campo en la clase
+    val nombre: String = "",
+    val dni: String = "",
+    val direccion: String = "",
+    val hora: String = ""
 )
+

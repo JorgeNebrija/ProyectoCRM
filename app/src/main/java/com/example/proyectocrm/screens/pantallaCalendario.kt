@@ -3,6 +3,7 @@ package com.example.proyectocrm.screens
 import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
@@ -17,8 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -35,22 +34,24 @@ fun PantallaCalendario(navController: NavHostController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScaffoldCalendario(navController: NavHostController) {
-    var mostrarDialogo by remember { mutableStateOf(false) } // Estado para mostrar el diálogo
+    var mostrarDialogo by remember { mutableStateOf(false) }
     var listaCitas by remember { mutableStateOf<List<Cita>>(emptyList()) }
-    var cargando by remember { mutableStateOf(true) } // Estado para controlar la carga
+    var cargando by remember { mutableStateOf(true) }
 
+    // Cargar citas al inicio
     LaunchedEffect(Unit) {
-        // Cambiar el estado a cargando mientras se obtienen las citas
         cargando = true
         try {
-            val citas = getCitas() // Llamada a la función para obtener todas las citas
-            listaCitas = citas // Asignar lista de citas
+            val citas = getCitas()
+            listaCitas = citas
         } catch (e: Exception) {
             println("Error al cargar citas: ${e.message}")
         } finally {
-            cargando = false // Cambiar a false después de la carga
+            cargando = false
         }
+
     }
+
     Scaffold(
         topBar = {
             SmallTopAppBar(
@@ -59,7 +60,6 @@ fun ScaffoldCalendario(navController: NavHostController) {
                         "Calendario Citas",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-
                     )
                 },
                 colors = TopAppBarDefaults.smallTopAppBarColors(
@@ -81,7 +81,6 @@ fun ScaffoldCalendario(navController: NavHostController) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             // Barra de búsqueda
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -96,7 +95,6 @@ fun ScaffoldCalendario(navController: NavHostController) {
                     tint = Color.Black,
                     modifier = Modifier.size(35.dp)
                 )
-                // Texto fijo: "Crear Nueva Cita"
                 Text(
                     text = "Crear Nueva Cita",
                     color = Color.Black,
@@ -106,25 +104,24 @@ fun ScaffoldCalendario(navController: NavHostController) {
                         .padding(start = 8.dp)
                 )
                 Button(
-                    onClick = { mostrarDialogo = true }, // Mostrar diálogo al hacer clic
+                    onClick = { mostrarDialogo = true },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0756FF)),
                     modifier = Modifier.padding(start = 8.dp),
                 ) {
                     Text("+")
                 }
             }
-            // Mostrar un indicador de carga mientras se cargan las citas
+
+            // Indicador de carga o mensaje de no citas
             if (cargando) {
-                CircularProgressIndicator() // Indicador de carga
+                CircularProgressIndicator()
             } else if (listaCitas.isEmpty()) {
-                // Mostrar mensaje si la lista está vacía
                 Text(
                     text = "No hay citas registradas.",
                     modifier = Modifier.padding(16.dp),
                     fontSize = 18.sp
                 )
             } else {
-                // Mostrar lista de citas si no está vacía
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -132,19 +129,115 @@ fun ScaffoldCalendario(navController: NavHostController) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(listaCitas) { cita ->
-                        CitaRow(cita) // Mostrar cada cita en una fila
+                        CitaRow(cita)
                     }
                 }
             }
+        }
 
-}
-            // Mostrar el diálogo si mostrarDialogo es true
-            if (mostrarDialogo) {
-                DialogoNuevaCita(onDismiss = { mostrarDialogo = false })
-            }
-
+        // Mostrar el diálogo
+        if (mostrarDialogo) {
+            DialogoNuevaCita(onDismiss = { mostrarDialogo = false })
+        }
     }
 }
+
+@Composable
+fun CitaRow(cita: Cita) {
+    val context = LocalContext.current
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "Nombre: ${cita.nombre}",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = "DNI: ${cita.dni}",
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = "Dirección: ${cita.direccion}",
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = "Hora: ${cita.hora}",
+                    fontSize = 14.sp,
+                    color = Color.Black
+                )
+            }
+            Icon(
+                painter = painterResource(id = R.drawable.calendarioicono),
+                contentDescription = "Cita Confirmada",
+                tint = Color(0xFF0756FF),
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .size(24.dp)
+            )
+        }
+    }
+}
+
+suspend fun getCitas(): List<Cita> {
+    val db = FirebaseFirestore.getInstance()
+    val citasRef = db.collection("citas")
+
+    return try {
+        val querySnapshot = citasRef.get().await()
+        val citas = mutableListOf<Cita>()
+
+        for (document in querySnapshot.documents) {
+            val cita = document.toObject(Cita::class.java)
+            cita?.let { citas.add(it) }
+        }
+
+        citas
+    } catch (e: Exception) {
+        println("Error al obtener citas: ${e.message}")
+        emptyList()
+    }
+}
+
+fun guardarCitaEnBaseDeDatos(nombre: String, dni: String, direccion: String, hora: String) {
+    val db = FirebaseFirestore.getInstance()
+    val citasRef = db.collection("citas")
+
+    val nuevaCita = hashMapOf(
+        "nombre" to nombre,
+        "dni" to dni,
+        "direccion" to direccion,
+        "hora" to hora
+    )
+
+    citasRef.add(nuevaCita)
+        .addOnSuccessListener {
+            println("Cita guardada con éxito.")
+        }
+        .addOnFailureListener { e ->
+            println("Error al guardar la cita: ${e.message}")
+        }
+}
+
 @Composable
 fun DialogoNuevaCita(onDismiss: () -> Unit) {
     var nombre by remember { mutableStateOf("") }
@@ -182,11 +275,10 @@ fun DialogoNuevaCita(onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = {
-                    guardarCitaEnBaseDeDatos(nombre, dni, direccion, hora) // Guardar cita
+                    guardarCitaEnBaseDeDatos(nombre, dni, direccion, hora)
                     onDismiss()
-                    // Cerrar el diálogo
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0756FF)) // Botón azul
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0756FF))
             ) {
                 Text("Guardar Cita")
             }
@@ -194,70 +286,13 @@ fun DialogoNuevaCita(onDismiss: () -> Unit) {
         dismissButton = {
             Button(
                 onClick = { onDismiss() },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0756FF)) // Botón azul
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0756FF))
             ) {
                 Text("Cancelar")
             }
         }
     )
 }
-
-// Composable para mostrar una fila de la tabla de citas
-@Composable
-fun CitaRow(cita: Cita) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface) // Fondo blanco usando MaterialTheme
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(text = "Nombre: ${cita.nombre}", fontSize = 16.sp)
-                Text(text = "DNI: ${cita.dni}", fontSize = 14.sp)
-                Text(text = "Dirección: ${cita.direccion}", fontSize = 14.sp)
-                Text(text = "Hora: ${cita.hora}", fontSize = 14.sp)
-            }
-        }
-    }
-}
-// Función suspendida para obtener todas las citas desde Firestore
-suspend fun getCitas(): List<Cita> {
-    val db = FirebaseFirestore.getInstance()
-    val citasRef = db.collection("citas") // Conecta con la colección "citas"
-
-    return try {
-        val querySnapshot = citasRef.get().await() // Obtiene los documentos
-        val citas = mutableListOf<Cita>() // Lista mutable para almacenar citas
-
-        // Itera sobre cada documento y lo convierte a la clase `Cita`
-        for (document in querySnapshot.documents) {
-            val cita = document.toObject(Cita::class.java)
-            cita?.let { citas.add(it) }
-        }
-
-        citas // Devuelve la lista de citas
-    } catch (e: Exception) {
-        println("Error al obtener citas: ${e.message}")
-        emptyList() // Devuelve una lista vacía en caso de error
-    }
-}
-fun guardarCitaEnBaseDeDatos(nombre: String, dni: String, direccion: String, hora: String) {
-    val db = FirebaseFirestore.getInstance()
-    val citasRef = db.collection("citas")
-
-    // Crea un objeto con los datos de la cita
-    val nuevaCita = hashMapOf(
-        "nombre" to nombre,
-        "dni" to dni,
-        "direccion" to direccion,
-        "hora" to hora
-    )
-}
-
-
-
 @Composable
 fun BottomCalendario(navController: NavHostController) {
     NavigationBar(
